@@ -35,11 +35,13 @@ public class WordCount02 {
         Map<String, Integer> topicThreadMap = new HashMap<String, Integer>();
         topicThreadMap.put("test", 1);
 
+
         JavaPairReceiverInputDStream<String, String> lines = KafkaUtils.createStream(
                 jsc,
                 "127.0.0.1:2181",
                 "test",
                 topicThreadMap);
+
 
         // wordcount code
         JavaDStream<String> words = lines.flatMap(

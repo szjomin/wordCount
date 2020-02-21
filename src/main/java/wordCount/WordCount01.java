@@ -4,6 +4,7 @@ import java.util.*;
 
 import kafka.serializer.StringDecoder;
 import org.apache.spark.SparkConf;
+import org.apache.spark.api.java.JavaPairRDD;
 import org.apache.spark.api.java.function.FlatMapFunction;
 import org.apache.spark.api.java.function.Function2;
 import org.apache.spark.api.java.function.PairFunction;
@@ -33,6 +34,7 @@ public class WordCount01{
         kafkaParams.put("metadata.broker.list",
                 "127.0.0.1:9092");
 
+
         // 创建一个集合set，添加读取的topic
 
         Set<String> topics = new HashSet<String>();
@@ -49,11 +51,15 @@ public class WordCount01{
                 topics);
 
         // 单词统计
-        JavaDStream<String> words = lines.flatMap(
+        /*JavaPairDStream<String, Integer> wordCounts = lines
+                .flatMap(s -> Arrays.asList(s._2.split(" ")).iterator())
+                .mapToPair(word -> new Tuple2<>(word, 1))
+                .reduceByKey((a, b) -> a + b);*/
+
+         JavaDStream<String> words = lines.flatMap(
 
                 new FlatMapFunction<Tuple2<String, String>, String>() {
 
-                    @Override
                     public Iterator<String> call(Tuple2<String, String> tuple) throws Exception {
                         return Arrays.asList(tuple._2.split(" ")).iterator();
                     }
@@ -69,7 +75,6 @@ public class WordCount01{
 
                     private static final long serialVersionUID = 1L;
 
-                    @Override
                     public Tuple2<String, Integer> call(String word) throws Exception {
                         return new Tuple2<String, Integer>(word, 1);
                     }
@@ -77,17 +82,15 @@ public class WordCount01{
                 });
 
         JavaPairDStream<String, Integer> wordCounts = pairs.reduceByKey(
-
                 new Function2<Integer, Integer, Integer>() {
-
                     private static final long serialVersionUID = 1L;
 
-                    @Override
                     public Integer call(Integer v1, Integer v2) throws Exception {
                         return v1 + v2;
                     }
+                }
+        );
 
-                });
 
         wordCounts.print();
 
